@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Copy, Plus, Trash2, CheckCircle, Clock, Sparkles, Moon, Sun, Edit3, Save } from 'lucide-react';
+import { Copy, Plus, Trash2, CheckCircle, Clock, Sparkles, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 interface CustomSection {
@@ -31,17 +31,11 @@ export default function Home() {
   const [newInProgressItem, setNewInProgressItem] = useState('');
   const [copied, setCopied] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
-  const [editingItem, setEditingItem] = useState<{sectionIndex: number, itemIndex: number} | null>(null);
+  const [editingItem, setEditingItem] = useState<{ sectionIndex: number, itemIndex: number } | null>(null);
   const [editValue, setEditValue] = useState('');
-  const [mounted, setMounted] = useState(false);
-  const [isEditingPreview, setIsEditingPreview] = useState(false);
-  const [previewEditValue, setPreviewEditValue] = useState('');
-  const [customPreviewText, setCustomPreviewText] = useState('');
-  const [editingLiveItem, setEditingLiveItem] = useState<number | null>(null);
-  const [editingInProgressItem, setEditingInProgressItem] = useState<number | null>(null);
-  const [liveEditValue, setLiveEditValue] = useState('');
-  const [inProgressEditValue, setInProgressEditValue] = useState('');
   const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     setMounted(true);
@@ -115,7 +109,7 @@ export default function Home() {
     if (item.trim()) {
       setData(prev => ({
         ...prev,
-        customSections: prev.customSections.map((section, i) => 
+        customSections: prev.customSections.map((section, i) =>
           i === sectionIndex ? { ...section, items: [...section.items, item.trim()] } : section
         )
       }));
@@ -134,7 +128,7 @@ export default function Home() {
   const removeCustomItem = (sectionIndex: number, itemIndex: number) => {
     setData(prev => ({
       ...prev,
-      customSections: prev.customSections.map((section, i) => 
+      customSections: prev.customSections.map((section, i) =>
         i === sectionIndex ? { ...section, items: section.items.filter((_, j) => j !== itemIndex) } : section
       )
     }));
@@ -150,10 +144,10 @@ export default function Home() {
     if (editingItem && editValue.trim()) {
       setData(prev => ({
         ...prev,
-        customSections: prev.customSections.map((section, i) => 
+        customSections: prev.customSections.map((section, i) =>
           i === editingItem.sectionIndex ? {
             ...section,
-            items: section.items.map((item, j) => 
+            items: section.items.map((item, j) =>
               j === editingItem.itemIndex ? editValue.trim() : item
             )
           } : section
@@ -170,67 +164,21 @@ export default function Home() {
     setEditValue('');
   };
 
-  const startEditingLiveItem = (index: number, currentValue: string) => {
-    setEditingLiveItem(index);
-    setLiveEditValue(currentValue);
-  };
-
-  const saveLiveItemEdit = () => {
-    if (editingLiveItem !== null && liveEditValue.trim()) {
-      setData(prev => ({
-        ...prev,
-        liveItems: prev.liveItems.map((item, i) => 
-          i === editingLiveItem ? liveEditValue.trim() : item
-        )
-      }));
-      setEditingLiveItem(null);
-      setLiveEditValue('');
-      toast.success('Live item updated!');
-    }
-  };
-
-  const cancelLiveItemEdit = () => {
-    setEditingLiveItem(null);
-    setLiveEditValue('');
-  };
-
-  const startEditingInProgressItem = (index: number, currentValue: string) => {
-    setEditingInProgressItem(index);
-    setInProgressEditValue(currentValue);
-  };
-
-  const saveInProgressItemEdit = () => {
-    if (editingInProgressItem !== null && inProgressEditValue.trim()) {
-      setData(prev => ({
-        ...prev,
-        inProgressItems: prev.inProgressItems.map((item, i) => 
-          i === editingInProgressItem ? inProgressEditValue.trim() : item
-        )
-      }));
-      setEditingInProgressItem(null);
-      setInProgressEditValue('');
-      toast.success('In-progress item updated!');
-    }
-  };
-
-  const cancelInProgressItemEdit = () => {
-    setEditingInProgressItem(null);
-    setInProgressEditValue('');
-  };
-
   const generateFormattedText = () => {
     const liveItemsText = data.liveItems.length > 0
       ? data.liveItems.map(item => `- ${item}`).join('\n')
       : '- \n- \n- ';
 
+    // Only include In-Progress section if there are items
     const inProgressSection = data.inProgressItems.length > 0
       ? `\nIn-Progress:\n${data.inProgressItems.map(item => `- ${item}`).join('\n')}`
       : '';
 
+    // Add custom sections
     const customSectionsText = data.customSections.length > 0
-      ? data.customSections.map(section => 
-          `\n${section.title}:\n${section.items.map(item => `- ${item}`).join('\n')}`
-        ).join('')
+      ? data.customSections.map(section =>
+        `\n${section.title}:\n${section.items.map(item => `- ${item}`).join('\n')}`
+      ).join('')
       : '';
 
     return `📢 Hello Everyone,
@@ -243,26 +191,9 @@ ${customSectionsText}
 - Make sure to HARD REFRESH the webpage to see the latest changes.`;
   };
 
-  const startEditingPreview = () => {
-    setPreviewEditValue(customPreviewText || generateFormattedText());
-    setIsEditingPreview(true);
-  };
-
-  const savePreviewEdit = () => {
-    setCustomPreviewText(previewEditValue);
-    setIsEditingPreview(false);
-    toast.success('Preview updated!');
-  };
-
-  const cancelPreviewEdit = () => {
-    setIsEditingPreview(false);
-    setPreviewEditValue('');
-  };
-
   const copyToClipboard = async () => {
     try {
-      const textToCopy = isEditingPreview ? previewEditValue : (customPreviewText || generateFormattedText());
-      await navigator.clipboard.writeText(textToCopy);
+      await navigator.clipboard.writeText(generateFormattedText());
       setCopied(true);
       toast.success('Copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
@@ -273,16 +204,11 @@ ${customSectionsText}
 
   const clearAllData = () => {
     setData({ liveItems: [], inProgressItems: [], customSections: [] });
-    setCustomPreviewText('');
-    setEditingLiveItem(null);
-    setEditingInProgressItem(null);
-    setLiveEditValue('');
-    setInProgressEditValue('');
     toast.success('All data cleared');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -292,24 +218,30 @@ ${customSectionsText}
               Announcement Tracker
             </h1>
             <Button
-              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-              variant="outline"
-              size="sm"
-              className="absolute right-0 top-1/2 -translate-y-1/2 dark:border-slate-600 dark:hover:bg-slate-700"
-            >
-              {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
+  onClick={() => mounted && setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+  variant="outline"
+  size="sm"
+  aria-label="Toggle theme"
+  className="absolute right-0 top-1/2 -translate-y-1/2"
+>
+  {mounted ? (
+    resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />
+  ) : (
+    <div className="h-4 w-4" />
+  )}
+</Button>
           </div>
-          <p className="text-gray-600 dark:text-slate-300 text-lg">
+          <p className="text-gray-600 dark:text-gray-300 text-lg">
             Manage your project updates and announcements with ease
           </p>
+
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Input Panel */}
           <div className="space-y-6">
             {/* Live Items Section */}
-            <Card className="shadow-lg border-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm dark:shadow-slate-900/50">
+            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
                   <CheckCircle className="w-5 h-5" />
@@ -326,7 +258,7 @@ ${customSectionsText}
                     value={newLiveItem}
                     onChange={(e) => setNewLiveItem(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addLiveItem()}
-                    className="flex-1 dark:bg-slate-700 dark:border-slate-600"
+                    className="flex-1"
                   />
                   <Button
                     onClick={addLiveItem}
@@ -340,47 +272,22 @@ ${customSectionsText}
                   {data.liveItems.map((item, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 group"
+                      className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-700 group"
                     >
                       <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                      {editingLiveItem === index ? (
-                        <>
-                          <Input
-                            value={liveEditValue}
-                            onChange={(e) => setLiveEditValue(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && saveLiveItemEdit()}
-                            className="flex-1 text-sm dark:bg-slate-700 dark:border-slate-600"
-                            autoFocus
-                          />
-                          <Button size="sm" onClick={saveLiveItemEdit} className="bg-green-600 hover:bg-green-700">
-                            <CheckCircle className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={cancelLiveItemEdit}>
-                            ✕
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <span 
-                            className="flex-1 text-sm cursor-pointer hover:bg-green-100 dark:hover:bg-green-800/30 dark:text-slate-200 p-1 rounded"
-                            onClick={() => startEditingLiveItem(index, item)}
-                          >
-                            {item}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => removeLiveItem(index)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
+                      <span className="flex-1 text-sm dark:text-gray-200">{item}</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeLiveItem(index)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-800 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   ))}
                   {data.liveItems.length === 0 && (
-                    <p className="text-gray-500 dark:text-slate-400 text-sm text-center py-4">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
                       No live items yet. Add some above!
                     </p>
                   )}
@@ -389,7 +296,7 @@ ${customSectionsText}
             </Card>
 
             {/* In-Progress Items Section */}
-            <Card className="shadow-lg border-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm dark:shadow-slate-900/50">
+            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
                   <Clock className="w-5 h-5" />
@@ -406,7 +313,7 @@ ${customSectionsText}
                     value={newInProgressItem}
                     onChange={(e) => setNewInProgressItem(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addInProgressItem()}
-                    className="flex-1 dark:bg-slate-700 dark:border-slate-600"
+                    className="flex-1"
                   />
                   <Button
                     onClick={addInProgressItem}
@@ -420,47 +327,22 @@ ${customSectionsText}
                   {data.inProgressItems.map((item, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 group"
+                      className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700 group"
                     >
                       <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                      {editingInProgressItem === index ? (
-                        <>
-                          <Input
-                            value={inProgressEditValue}
-                            onChange={(e) => setInProgressEditValue(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && saveInProgressItemEdit()}
-                            className="flex-1 text-sm dark:bg-slate-700 dark:border-slate-600"
-                            autoFocus
-                          />
-                          <Button size="sm" onClick={saveInProgressItemEdit} className="bg-green-600 hover:bg-green-700">
-                            <CheckCircle className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={cancelInProgressItemEdit}>
-                            ✕
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <span 
-                            className="flex-1 text-sm cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800/30 dark:text-slate-200 p-1 rounded"
-                            onClick={() => startEditingInProgressItem(index, item)}
-                          >
-                            {item}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => removeInProgressItem(index)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
+                      <span className="flex-1 text-sm dark:text-gray-200">{item}</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeInProgressItem(index)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-800 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   ))}
                   {data.inProgressItems.length === 0 && (
-                    <p className="text-gray-500 dark:text-slate-400 text-sm text-center py-4">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
                       No in-progress items yet. Add some above!
                     </p>
                   )}
@@ -469,7 +351,7 @@ ${customSectionsText}
             </Card>
 
             {/* Custom Sections */}
-            <Card className="shadow-lg border-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm dark:shadow-slate-900/50">
+            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
                   <Sparkles className="w-5 h-5" />
@@ -482,11 +364,11 @@ ${customSectionsText}
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Add custom section title (e.g., Functional Team Task)..."
+                    placeholder="Add custom section title (e.g., Live Updates)..."
                     value={newSectionTitle}
                     onChange={(e) => setNewSectionTitle(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addCustomSection()}
-                    className="flex-1 dark:bg-slate-700 dark:border-slate-600"
+                    className="flex-1"
                   />
                   <Button
                     onClick={addCustomSection}
@@ -514,7 +396,7 @@ ${customSectionsText}
                     />
                   ))}
                   {data.customSections.length === 0 && (
-                    <p className="text-gray-500 dark:text-slate-400 text-sm text-center py-4">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
                       No custom sections yet. Add one above!
                     </p>
                   )}
@@ -527,7 +409,7 @@ ${customSectionsText}
               <Button
                 onClick={clearAllData}
                 variant="outline"
-                className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Clear All
@@ -537,89 +419,37 @@ ${customSectionsText}
 
           {/* Preview Panel */}
           <div className="space-y-6">
-            <Card className="shadow-lg border-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm dark:shadow-slate-900/50">
+            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center justify-between">
-                  <span className="text-gray-800 dark:text-slate-200">Live Preview</span>
-                  <div className="flex gap-2">
-                    {isEditingPreview ? (
+                  <span className="text-gray-800 dark:text-gray-200">Live Preview</span>
+                  <Button
+                    onClick={copyToClipboard}
+                    className={`transition-all duration-200 ${copied
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : 'bg-gray-600 hover:bg-gray-700'
+                      }`}
+                  >
+                    {copied ? (
                       <>
-                        <Button
-                          onClick={savePreviewEdit}
-                          className="bg-green-600 hover:bg-green-700 transition-colors"
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          Save
-                        </Button>
-                        <Button
-                          onClick={cancelPreviewEdit}
-                          variant="outline"
-                          className="border-gray-300 dark:border-slate-600"
-                        >
-                          Cancel
-                        </Button>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Copied!
                       </>
                     ) : (
                       <>
-                        <Button
-                          onClick={startEditingPreview}
-                          variant="outline"
-                          className="border-gray-300 dark:border-slate-600"
-                        >
-                          <Edit3 className="w-4 h-4 mr-2" />
-                          Edit
-                        </Button>
-                        {customPreviewText && (
-                          <Button
-                            onClick={() => {
-                              setCustomPreviewText('');
-                              toast.success('Reset to auto-generated preview!');
-                            }}
-                            variant="outline"
-                            className="border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-600 dark:text-orange-400 dark:hover:bg-orange-900/20"
-                          >
-                            Reset
-                          </Button>
-                        )}
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy Text
                       </>
                     )}
-                    <Button
-                      onClick={copyToClipboard}
-                      className={`transition-all duration-200 ${copied
-                          ? 'bg-green-600 hover:bg-green-700'
-                          : 'bg-gray-600 hover:bg-gray-700 dark:bg-slate-600 dark:hover:bg-slate-700'
-                        }`}
-                    >
-                      {copied ? (
-                        <>
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4 mr-2" />
-                          Copy Text
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isEditingPreview ? (
-                  <textarea
-                    value={previewEditValue}
-                    onChange={(e) => setPreviewEditValue(e.target.value)}
-                    className="w-full h-96 bg-gray-50 dark:bg-slate-900/80 rounded-lg p-6 font-mono text-sm border-2 border-dashed border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                    placeholder="Edit your preview text here..."
-                  />
-                ) : (
-                  <div className="bg-gray-50 dark:bg-slate-900/80 rounded-lg p-6 font-mono text-sm border-2 border-dashed border-gray-200 dark:border-slate-600">
-                    <pre className="whitespace-pre-wrap text-gray-800 dark:text-slate-200 leading-relaxed">
-                      {customPreviewText || generateFormattedText()}
-                    </pre>
-                  </div>
-                )}
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 font-mono text-sm border-2 border-dashed border-gray-200 dark:border-gray-600">
+                  <pre className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed">
+                    {generateFormattedText()}
+                  </pre>
+                </div>
               </CardContent>
             </Card>
 
@@ -645,10 +475,10 @@ ${customSectionsText}
             </Card>
           </div>
         </div>
-        
+
         {/* Copyright Footer */}
-        <footer className="mt-12 text-center py-6 border-t border-gray-200 dark:border-slate-700">
-          <p className="text-gray-600 dark:text-slate-400 text-sm">
+        <footer className="mt-12 text-center py-6 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
             © 2025 <b>Kevin Soni.</b> All rights reserved.
           </p>
         </footer>
@@ -656,19 +486,18 @@ ${customSectionsText}
     </div>
   );
 }
-
-function CustomSectionComponent({ 
-  section, 
-  sectionIndex, 
-  onAddItem, 
-  onRemoveSection, 
-  onRemoveItem, 
-  onStartEdit, 
-  editingItem, 
-  editValue, 
-  setEditValue, 
-  onSaveEdit, 
-  onCancelEdit 
+function CustomSectionComponent({
+  section,
+  sectionIndex,
+  onAddItem,
+  onRemoveSection,
+  onRemoveItem,
+  onStartEdit,
+  editingItem,
+  editValue,
+  setEditValue,
+  onSaveEdit,
+  onCancelEdit
 }: {
   section: CustomSection;
   sectionIndex: number;
@@ -676,7 +505,7 @@ function CustomSectionComponent({
   onRemoveSection: (sectionIndex: number) => void;
   onRemoveItem: (sectionIndex: number, itemIndex: number) => void;
   onStartEdit: (sectionIndex: number, itemIndex: number, currentValue: string) => void;
-  editingItem: {sectionIndex: number, itemIndex: number} | null;
+  editingItem: { sectionIndex: number, itemIndex: number } | null;
   editValue: string;
   setEditValue: (value: string) => void;
   onSaveEdit: () => void;
@@ -690,42 +519,42 @@ function CustomSectionComponent({
   };
 
   return (
-    <div className="border border-purple-200 dark:border-purple-800 rounded-lg p-4 bg-purple-50 dark:bg-purple-900/20">
+    <div className="border border-purple-200 dark:border-purple-700 rounded-lg p-4 bg-purple-50 dark:bg-purple-900/30">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="font-semibold text-purple-800 dark:text-purple-200">{section.title}</h4>
+        <h4 className="font-semibold text-purple-800 dark:text-purple-300">{section.title}</h4>
         <Button
           size="sm"
           variant="ghost"
           onClick={() => onRemoveSection(sectionIndex)}
-          className="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
+          className="text-red-600 hover:text-red-800 hover:bg-red-50"
         >
           <Trash2 className="w-4 h-4" />
         </Button>
       </div>
-      
+
       <div className="flex gap-2 mb-3">
         <Input
           placeholder="Add item..."
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleAddItem()}
-          className="flex-1 text-sm dark:bg-slate-700 dark:border-slate-600"
+          className="flex-1 text-sm"
         />
         <Button size="sm" onClick={handleAddItem}>
           <Plus className="w-4 h-4" />
         </Button>
       </div>
-      
+
       <div className="space-y-2">
         {section.items.map((item, itemIndex) => (
-          <div key={itemIndex} className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded border dark:border-slate-600 group">
+          <div key={itemIndex} className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 group">
             {editingItem?.sectionIndex === sectionIndex && editingItem?.itemIndex === itemIndex ? (
               <>
                 <Input
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && onSaveEdit()}
-                  className="flex-1 text-sm dark:bg-slate-700 dark:border-slate-600"
+                  className="flex-1 text-sm"
                   autoFocus
                 />
                 <Button size="sm" onClick={onSaveEdit} className="bg-green-600 hover:bg-green-700">
@@ -737,8 +566,8 @@ function CustomSectionComponent({
               </>
             ) : (
               <>
-                <span 
-                  className="flex-1 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 dark:text-slate-200 p-1 rounded"
+                <span
+                  className="flex-1 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200 p-1 rounded"
                   onClick={() => onStartEdit(sectionIndex, itemIndex, item)}
                 >
                   {item}
@@ -747,7 +576,7 @@ function CustomSectionComponent({
                   size="sm"
                   variant="ghost"
                   onClick={() => onRemoveItem(sectionIndex, itemIndex)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-800 hover:bg-red-50"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
