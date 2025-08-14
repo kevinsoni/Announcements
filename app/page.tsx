@@ -306,6 +306,13 @@ ${liveItemsText}${inProgressSection}
             </Card>
           </div>
         </div>
+        
+        {/* Copyright Footer */}
+        <footer className="mt-12 text-center py-6 border-t border-gray-200">
+          <p className="text-gray-600 text-sm">
+            © 2025 <b>Kevin Soni.</b> All rights reserved.
+          </p>
+        </footer>
       </div>
     </div>
   );
