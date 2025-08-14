@@ -88,7 +88,8 @@ export default function Home() {
 
     return `📢 Hello Everyone,
 ⭐ Below points are live: ⭐
-${liveItemsText}${inProgressSection}
+${liveItemsText}
+${inProgressSection}
 
 ℹ️NOTE:
 - Make sure to HARD REFRESH the webpage to see the latest changes.`;
