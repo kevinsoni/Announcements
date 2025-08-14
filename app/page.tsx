@@ -23,7 +23,6 @@ export default function Home() {
   const [newInProgressItem, setNewInProgressItem] = useState('');
   const [copied, setCopied] = useState(false);
 
-  // Load data from localStorage on component mount
   useEffect(() => {
     const savedData = localStorage.getItem('announcementData');
     if (savedData) {
@@ -35,7 +34,6 @@ export default function Home() {
     }
   }, []);
 
-  // Save data to localStorage whenever data changes
   useEffect(() => {
     localStorage.setItem('announcementData', JSON.stringify(data));
   }, [data]);
@@ -79,22 +77,20 @@ export default function Home() {
   };
 
   const generateFormattedText = () => {
-    const liveItemsText = data.liveItems.length > 0 
+    const liveItemsText = data.liveItems.length > 0
       ? data.liveItems.map(item => `- ${item}`).join('\n')
       : '- \n- \n- ';
-    
-    const inProgressText = data.inProgressItems.length > 0 
-      ? data.inProgressItems.map(item => `- ${item}`).join('\n')
-      : '- \n- ';
 
-    return `Hello Everyone,
-Below points are live:
-${liveItemsText}
+    // Only include In-Progress section if there are items
+    const inProgressSection = data.inProgressItems.length > 0
+      ? `\nIn-Progress:\n${data.inProgressItems.map(item => `- ${item}`).join('\n')}`
+      : '';
 
-In-Progress:
-${inProgressText}
+    return `📢 Hello Everyone,
+⭐ Below points are live: ⭐
+${liveItemsText}${inProgressSection}
 
-NOTE: 
+ℹ️NOTE:
 - Make sure to HARD REFRESH the webpage to see the latest changes.`;
   };
 
@@ -153,14 +149,14 @@ NOTE:
                     onKeyPress={(e) => e.key === 'Enter' && addLiveItem()}
                     className="flex-1"
                   />
-                  <Button 
+                  <Button
                     onClick={addLiveItem}
                     className="bg-green-600 hover:bg-green-700 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
-                
+
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {data.liveItems.map((item, index) => (
                     <div
@@ -208,14 +204,14 @@ NOTE:
                     onKeyPress={(e) => e.key === 'Enter' && addInProgressItem()}
                     className="flex-1"
                   />
-                  <Button 
+                  <Button
                     onClick={addInProgressItem}
                     className="bg-blue-600 hover:bg-blue-700 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
-                
+
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {data.inProgressItems.map((item, index) => (
                     <div
@@ -264,11 +260,10 @@ NOTE:
                   <span className="text-gray-800">Live Preview</span>
                   <Button
                     onClick={copyToClipboard}
-                    className={`transition-all duration-200 ${
-                      copied 
-                        ? 'bg-green-600 hover:bg-green-700' 
+                    className={`transition-all duration-200 ${copied
+                        ? 'bg-green-600 hover:bg-green-700'
                         : 'bg-gray-600 hover:bg-gray-700'
-                    }`}
+                      }`}
                   >
                     {copied ? (
                       <>
