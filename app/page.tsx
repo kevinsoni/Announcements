@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Copy, Plus, Trash2, CheckCircle, Clock, Sparkles, Moon, Sun, Edit3, Save } from 'lucide-react';
+import { Copy, Plus, Trash2, CheckCircle, Clock, Sparkles, Moon, Sun, Edit3, Save, GripVertical } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 interface CustomSection {
@@ -41,6 +41,7 @@ export default function Home() {
   const [editingInProgressItem, setEditingInProgressItem] = useState<number | null>(null);
   const [liveEditValue, setLiveEditValue] = useState('');
   const [inProgressEditValue, setInProgressEditValue] = useState('');
+  const [draggedItem, setDraggedItem] = useState<{type: string, sectionIndex?: number, itemIndex: number} | null>(null);
   const { setTheme, resolvedTheme } = useTheme();
 
   useEffect(() => {
@@ -218,6 +219,50 @@ export default function Home() {
     setInProgressEditValue('');
   };
 
+  const moveItem = (type: string, sectionIndex: number | undefined, fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    
+    setData(prev => {
+      if (type === 'live') {
+        const newItems = [...prev.liveItems];
+        const [movedItem] = newItems.splice(fromIndex, 1);
+        newItems.splice(toIndex, 0, movedItem);
+        return { ...prev, liveItems: newItems };
+      } else if (type === 'inProgress') {
+        const newItems = [...prev.inProgressItems];
+        const [movedItem] = newItems.splice(fromIndex, 1);
+        newItems.splice(toIndex, 0, movedItem);
+        return { ...prev, inProgressItems: newItems };
+      } else if (type === 'custom' && sectionIndex !== undefined) {
+        const newSections = [...prev.customSections];
+        const newItems = [...newSections[sectionIndex].items];
+        const [movedItem] = newItems.splice(fromIndex, 1);
+        newItems.splice(toIndex, 0, movedItem);
+        newSections[sectionIndex] = { ...newSections[sectionIndex], items: newItems };
+        return { ...prev, customSections: newSections };
+      }
+      return prev;
+    });
+  };
+
+  const handleDragStart = (e: React.DragEvent, type: string, sectionIndex: number | undefined, itemIndex: number) => {
+    setDraggedItem({ type, sectionIndex, itemIndex });
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, type: string, sectionIndex: number | undefined, dropIndex: number) => {
+    e.preventDefault();
+    if (!draggedItem || draggedItem.type !== type || draggedItem.sectionIndex !== sectionIndex) return;
+    
+    moveItem(type, sectionIndex, draggedItem.itemIndex, dropIndex);
+    setDraggedItem(null);
+  };
+
   const generateFormattedText = () => {
     const liveItemsText = data.liveItems.length > 0
       ? data.liveItems.map(item => `- ${item}`).join('\n')
@@ -230,7 +275,7 @@ export default function Home() {
     const customSectionsText = data.customSections.length > 0
       ? data.customSections.map(section => 
           `\n${section.title}:\n${section.items.map(item => `- ${item}`).join('\n')}`
-        ).join('')
+        ).join('\n')
       : '';
 
     return `📢 Hello Everyone,
@@ -289,7 +334,7 @@ ${customSectionsText}
           <div className="flex items-center justify-center gap-2 mb-4 relative">
             <Sparkles className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-600 dark:from-blue-400 dark:to-green-400 bg-clip-text text-transparent">
-              Announcement Tracker
+              Weekly Tracker
             </h1>
             <Button
               onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
@@ -340,8 +385,13 @@ ${customSectionsText}
                   {data.liveItems.map((item, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 group"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, 'live', undefined, index)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, 'live', undefined, index)}
+                      className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 group cursor-move hover:shadow-md transition-shadow"
                     >
+                      <GripVertical className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
                       <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
                       {editingLiveItem === index ? (
                         <>
@@ -420,8 +470,13 @@ ${customSectionsText}
                   {data.inProgressItems.map((item, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 group"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, 'inProgress', undefined, index)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, 'inProgress', undefined, index)}
+                      className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 group cursor-move hover:shadow-md transition-shadow"
                     >
+                      <GripVertical className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
                       <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                       {editingInProgressItem === index ? (
                         <>
@@ -511,6 +566,22 @@ ${customSectionsText}
                       setEditValue={setEditValue}
                       onSaveEdit={saveEdit}
                       onCancelEdit={cancelEdit}
+                      onMoveItem={(sectionIndex, fromIndex, toIndex) => {
+                        setData(prev => ({
+                          ...prev,
+                          customSections: prev.customSections.map((section, i) => 
+                            i === sectionIndex ? {
+                              ...section,
+                              items: (() => {
+                                const newItems = [...section.items];
+                                const [movedItem] = newItems.splice(fromIndex, 1);
+                                newItems.splice(toIndex, 0, movedItem);
+                                return newItems;
+                              })()
+                            } : section
+                          )
+                        }));
+                      }}
                     />
                   ))}
                   {data.customSections.length === 0 && (
@@ -668,7 +739,8 @@ function CustomSectionComponent({
   editValue, 
   setEditValue, 
   onSaveEdit, 
-  onCancelEdit 
+  onCancelEdit,
+  onMoveItem 
 }: {
   section: CustomSection;
   sectionIndex: number;
@@ -681,6 +753,7 @@ function CustomSectionComponent({
   setEditValue: (value: string) => void;
   onSaveEdit: () => void;
   onCancelEdit: () => void;
+  onMoveItem: (sectionIndex: number, fromIndex: number, toIndex: number) => void;
 }) {
   const [newItem, setNewItem] = useState('');
 
@@ -718,7 +791,36 @@ function CustomSectionComponent({
       
       <div className="space-y-2">
         {section.items.map((item, itemIndex) => (
-          <div key={itemIndex} className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded border dark:border-slate-600 group">
+          <div 
+            key={itemIndex} 
+            draggable
+            onDragStart={(e) => {
+              const dragData = { type: 'custom', sectionIndex, itemIndex };
+              e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+              e.dataTransfer.effectAllowed = 'move';
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+              if (dragData.type === 'custom' && dragData.sectionIndex === sectionIndex) {
+                const fromIndex = dragData.itemIndex;
+                const toIndex = itemIndex;
+                if (fromIndex !== toIndex) {
+                  const newItems = [...section.items];
+                  const [movedItem] = newItems.splice(fromIndex, 1);
+                  newItems.splice(toIndex, 0, movedItem);
+                  // Update the section through the parent component
+                  onMoveItem(sectionIndex, fromIndex, toIndex);
+                }
+              }
+            }}
+            className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded border dark:border-slate-600 group cursor-move hover:shadow-md transition-shadow"
+          >
+            <GripVertical className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
             {editingItem?.sectionIndex === sectionIndex && editingItem?.itemIndex === itemIndex ? (
               <>
                 <Input
